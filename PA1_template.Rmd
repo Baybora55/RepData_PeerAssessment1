@@ -95,5 +95,14 @@ average_week <- ddply(dataWeekDAY, .(interval, wk), summarise, steps = mean(step
 
 xyplot(steps ~ interval | wk, data = average_week, layout = c(1, 2), type = "l")
 ```
-We can see from the graph that on Weekdays people walk more generally. 
+
+
+### We can see from the graph the comparison between the people walking on weekdays and weekends
+
+
+### Use the Knit option in RStudio to create the Html file.
+
+
+
+
 
