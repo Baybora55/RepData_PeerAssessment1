@@ -1,25 +1,99 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+author: Bora Aslan
+date: August 19, 2018
+
 ---
 
-
 ## Loading and preprocessing the data
-
-
+Loading and some process on the data
+```{r}
+unzip("activity.zip")
+myData <- read.csv("activity.csv",sep=",",head=TRUE,colClasses=c("integer","Date","integer"))
+myDataFinal <- myData[!is.na(myData$steps),]
+head(myDataFinal)
+```
 
 ## What is mean total number of steps taken per day?
+The following operations are done in order
+1, Split the data
+2. Plot
+3. Find the mean
+4. Find the median
 
-
+```{r}
+library(plyr)
+salesPerDay<- sapply(split(myDataFinal$steps,myDataFinal$date),sum,na.rm=TRUE)
+hist(salesPerDay)
+meanSales <- mean(salesPerDay)
+medianSales <- median(salesPerDay)
+```
+The mean of sales per day is **`r meanSales`** 
+The median of sales is **`r medianSales`.** 
 
 ## What is the average daily activity pattern?
+The following operations are done in order
+1. Split in intervals
+2. Plot
 
+```{r}
+IntervalSteps <- ddply(myDataFinal,~interval,summarise, mean_steps=mean(steps))
+plot(IntervalSteps$interval, IntervalSteps$mean_steps, ylab = "Average Number of Steps Taken", xlab = "Interval", type = "l")
 
+```
 
 ## Imputing missing values
+1. Impute the missing values 
+2. Plot 
+3. Find the mean again
+4. Find the median again
+
+```{r}
+myDataFinal <- myData[!is.na(myData$steps),]
+nrow(na.omit(myDataFinal))
+dataCheck<-myDataFinal
+for(i in 1:nrow(myDataFinal)){
+    if(is.na(myDataFinal$steps[i])){
+        dataCheck$steps[i]<- salesPerDay[(i %% 288)+1]
+    }
+}
+```
 
 
+```{r}
+salesPerDayNew <- sapply(split(dataCheck$steps,dataCheck$date),sum,na.rm=T)
+hist(salesPerDayNew)
+
+meanSalesNew <- mean(salesPerDayNew)
+medianSalesNew <- median(salesPerDayNew)
+
+```
+
+After the new computations, the updated mean and median are as follows
+The new mean of number of steps is **`r meanSalesNew`** .  
+The new mediane is **`r medianSalesNew**.
+
+### The 5-minute interval that, on average, contains the maximum number of steps?
+
+```{r}
+dataInterval<- ddply(dataCheck,~interval,summarise, mean_steps=mean(steps))
+maxInterval <- max(dataInterval$mean_steps)
+theInterval <- max(dataCheck[dataInterval$mean_steps == maxInterval, 1])
+```
+The maximum number of steps is ***`r maxInterval`***
+The 5-minute interval is ***`r theInterval`***
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+library(lattice)
+weekDAY <- weekdays(as.Date(dataCheck$date))
+dataWeekDAY <- transform(dataCheck, day = weekDAY)
+dataWeekDAY$wk <- ifelse(dataWeekDAY$day %in% c("Saturday", "Sunday"), "weekend", 
+    "weekday")
+average_week <- ddply(dataWeekDAY, .(interval, wk), summarise, steps = mean(steps))
+
+xyplot(steps ~ interval | wk, data = average_week, layout = c(1, 2), type = "l")
+```
+We can see from the graph that on Weekdays people walk more generally. 
+
